@@ -1,0 +1,108 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy.stats import ttest_ind
+# Load transaction data
+transaction_data = pd.read_csv("QVI_transaction_data.csv")
+
+# Convert DATE column to datetime
+transaction_data["DATE"] = pd.to_datetime(transaction_data["DATE"], origin="1899-12-30", unit="D")
+
+# Load purchase behavior data
+purchase_behavior = pd.read_csv("QVI_purchase_behaviour.csv")
+
+# Check for salsa products and remove them
+transaction_data["SALSA"] = transaction_data["PROD_NAME"].str.contains("salsa", case=False)
+transaction_data = transaction_data[~transaction_data["SALSA"]].drop(columns=["SALSA"])
+# Remove transactions with unrealistic quantities (e.g., 200 packets)
+transaction_data = transaction_data[transaction_data["PROD_QTY"] < 200]
+
+# Extract pack size from PROD_NAME
+transaction_data["PACK_SIZE"] = transaction_data["PROD_NAME"].str.extract(r"(\d+)").astype(float)
+# Extract brand name from PROD_NAME
+transaction_data["BRAND"] = transaction_data["PROD_NAME"].str.split().str[0]
+
+# Clean brand names (e.g., combine "RED" and "RRD")
+transaction_data["BRAND"] = transaction_data["BRAND"].replace({"RED": "RRD"})
+# Merge transaction and customer data
+merged_data = pd.merge(transaction_data, purchase_behavior, on="LYLTY_CARD_NBR", how="left")
+segment_sales = merged_data.groupby(["LIFESTAGE", "PREMIUM_CUSTOMER"])["TOT_SALES"].sum().reset_index()
+# Calculate total sales by LIFESTAGE and PREMIUM_CUSTOMER
+segment_sales = merged_data.groupby(["LIFESTAGE", "PREMIUM_CUSTOMER"])["TOT_SALES"].sum().reset_index()
+
+# Plot total sales by segment
+plt.figure(figsize=(10, 6))
+sns.barplot(data=segment_sales, x="LIFESTAGE", y="TOT_SALES", hue="PREMIUM_CUSTOMER")
+plt.title("Total Sales by Customer Segment")
+plt.xlabel("Lifestage")
+plt.ylabel("Total Sales")
+plt.show()
+# Calculate number of customers by segment
+segment_customers = merged_data.groupby(["LIFESTAGE", "PREMIUM_CUSTOMER"])["LYLTY_CARD_NBR"].nunique().reset_index()
+
+# Plot number of customers by segment
+plt.figure(figsize=(10, 6))
+sns.barplot(data=segment_customers, x="LIFESTAGE", y="LYLTY_CARD_NBR", hue="PREMIUM_CUSTOMER")
+plt.title("Number of Customers by Segment")
+plt.xlabel("Lifestage")
+plt.ylabel("Number of Customers")
+plt.show()
+# Calculate average units per customer
+avg_units = merged_data.groupby(["LIFESTAGE", "PREMIUM_CUSTOMER"])["PROD_QTY"].mean().reset_index()
+
+# Plot average units per customer
+plt.figure(figsize=(10, 6))
+sns.barplot(data=avg_units, x="LIFESTAGE", y="PROD_QTY", hue="PREMIUM_CUSTOMER")
+plt.title("Average Units per Customer")
+plt.xlabel("Lifestage")
+plt.ylabel("Average Units")
+plt.show()
+# Calculate average price per unit
+merged_data["PRICE_PER_UNIT"] = merged_data["TOT_SALES"] / merged_data["PROD_QTY"]
+avg_price = merged_data.groupby(["LIFESTAGE", "PREMIUM_CUSTOMER"])["PRICE_PER_UNIT"].mean().reset_index()
+
+# Plot average price per unit
+plt.figure(figsize=(10, 6))
+sns.barplot(data=avg_price, x="LIFESTAGE", y="PRICE_PER_UNIT", hue="PREMIUM_CUSTOMER")
+plt.title("Average Price per Unit")
+plt.xlabel("Lifestage")
+plt.ylabel("Average Price per Unit")
+plt.show()
+# Compare mainstream vs. premium/budget for young singles/couples
+mainstream = merged_data[(merged_data["PREMIUM_CUSTOMER"] == "Mainstream") & 
+                         (merged_data["LIFESTAGE"].isin(["YOUNG SINGLES/COUPLES", "MIDAGE SINGLES/COUPLES"]))]["PRICE_PER_UNIT"]
+premium_budget = merged_data[(merged_data["PREMIUM_CUSTOMER"].isin(["Premium", "Budget"])) & 
+                             (merged_data["LIFESTAGE"].isin(["YOUNG SINGLES/COUPLES", "MIDAGE SINGLES/COUPLES"]))]["PRICE_PER_UNIT"]
+
+# Perform t-test
+t_stat, p_value = ttest_ind(mainstream, premium_budget)
+print(f"T-Test Results: t-statistic = {t_stat}, p-value = {p_value}")
+# Analyze brand preferences for Mainstream - Young Singles/Couples
+target_segment = merged_data[(merged_data["LIFESTAGE"] == "YOUNG SINGLES/COUPLES") & 
+                             (merged_data["PREMIUM_CUSTOMER"] == "Mainstream")]
+brand_preferences = target_segment.groupby("BRAND")["TOT_SALES"].sum().reset_index()
+
+# Plot brand preferences
+plt.figure(figsize=(10, 6))
+sns.barplot(data=brand_preferences, x="BRAND", y="TOT_SALES")
+plt.title("Brand Preferences for Mainstream - Young Singles/Couples")
+plt.xlabel("Brand")
+plt.ylabel("Total Sales")
+plt.show()
+# Analyze pack size preferences
+pack_size_preferences = target_segment.groupby("PACK_SIZE")["TOT_SALES"].sum().reset_index()
+
+# Plot pack size preferences
+plt.figure(figsize=(10, 6))
+sns.barplot(data=pack_size_preferences, x="PACK_SIZE", y="TOT_SALES")
+plt.title("Pack Size Preferences for Mainstream - Young Singles/Couples")
+plt.xlabel("Pack Size")
+plt.ylabel("Total Sales")
+plt.show()
+# Save the cleaned and merged data
+merged_data.to_csv("QVI_data_cleaned.csv", index=False)
+from IPython.display import FileLink
+
+# Display a link to download the CSV file
+FileLink("QVI_data_cleaned.csv")
