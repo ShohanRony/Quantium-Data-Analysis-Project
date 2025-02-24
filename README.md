@@ -57,8 +57,8 @@ Key Features
     bash
     Copy
 
-    git clone https://github.com/your-username/retail-strategy-analytics.git
-    cd retail-strategy-analytics
+    [git clone https://github.com/your-username/retail-strategy-analytics.git
+    cd retail-strategy-analytics](https://github.com/ShohanRony/Quantium-Data-Analysis-Project.git)
 **
     Install Dependencies:**
     Ensure you have the required Python libraries installed:
