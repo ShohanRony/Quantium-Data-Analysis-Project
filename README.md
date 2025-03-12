@@ -141,7 +141,7 @@ I'm Shohinur Pervez Shohan, a data analyst with strong skills in Python, statist
 - Develop data-driven recommendations
 - Communicate complex findings clearly
 
-I'm currently seeking data analysis opportunities. Feel free to connect with me on [LinkedIn](https://www.linkedin.com/in/shohinur-pervez-shohan/) or via email at shohinur.pervez.shohan@gmail.com.
+I'm currently seeking data analysis opportunities. Feel free to connect with me on [LinkedIn][(https://[www.linkedin.com/in/shohinur-pervez-shohan](https://www.linkedin.com/in/shohan414/)](https://www.linkedin.com/in/shohan414/)or via email at shohan414@gmail.com 
 
 ## 📄 License
 
